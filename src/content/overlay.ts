@@ -647,6 +647,22 @@ async function main(): Promise<void> {
   lockScheduleHeader.appendChild(lockScheduleAddBtn);
   lockScheduleDropdown.appendChild(lockScheduleHeader);
   lockScheduleDropdown.appendChild(lockScheduleItems);
+  const lockSchedulePreview = document.createElement('div');
+  lockSchedulePreview.style.position = 'fixed';
+  lockSchedulePreview.style.top = '48px';
+  lockSchedulePreview.style.left = '8px';
+  lockSchedulePreview.style.display = 'none';
+  lockSchedulePreview.style.maxWidth = 'min(300px, calc(92vw - 34px))';
+  lockSchedulePreview.style.padding = '8px 10px';
+  lockSchedulePreview.style.borderRadius = '10px';
+  lockSchedulePreview.style.border = '1px solid rgba(56,189,248,0.45)';
+  lockSchedulePreview.style.background = 'rgba(15, 23, 42, 0.92)';
+  lockSchedulePreview.style.boxShadow = '0 10px 28px rgba(2, 6, 23, 0.5)';
+  lockSchedulePreview.style.color = '#e2e8f0';
+  lockSchedulePreview.style.fontFamily = 'ui-sans-serif, system-ui, sans-serif';
+  lockSchedulePreview.style.fontSize = '12px';
+  lockSchedulePreview.style.lineHeight = '1.35';
+  lockSchedulePreview.style.zIndex = '2';
   const unlockBtn = document.createElement('button');
   unlockBtn.type = 'button';
   unlockBtn.textContent = 'Mở khóa website';
@@ -662,6 +678,7 @@ async function main(): Promise<void> {
   lockModal.appendChild(lockLabel);
   lockModal.appendChild(unlockBtn);
   lockScreen.appendChild(lockScheduleBtn);
+  lockScreen.appendChild(lockSchedulePreview);
   lockScreen.appendChild(lockScheduleDropdown);
   lockScreen.appendChild(lockModal);
   document.documentElement.appendChild(lockScreen);
@@ -862,6 +879,44 @@ async function main(): Promise<void> {
       applyPosition(panel, pos);
     });
   };
+  const getNextOccurrenceMs = (timeHHMM: string, nowMs: number): number => {
+    const [hStr, mStr] = timeHHMM.split(':');
+    const h = Number(hStr);
+    const m = Number(mStr);
+    const base = new Date(nowMs);
+    base.setHours(h, m, 0, 0);
+    if (base.getTime() <= nowMs) {
+      base.setDate(base.getDate() + 1);
+    }
+    return base.getTime();
+  };
+  const getNearestSchedule = (list: TimerSchedule[]): TimerSchedule | null => {
+    if (list.length === 0) return null;
+    const nowMs = Date.now();
+    let nearest: TimerSchedule | null = null;
+    let nearestDelta = Number.POSITIVE_INFINITY;
+    for (const s of list) {
+      const delta = getNextOccurrenceMs(s.timeHHMM, nowMs) - nowMs;
+      if (delta < nearestDelta) {
+        nearestDelta = delta;
+        nearest = s;
+      }
+    }
+    return nearest;
+  };
+  const renderNearestSchedulePreview = () => {
+    if (lockScheduleDropdownOpen) {
+      lockSchedulePreview.style.display = 'none';
+      return;
+    }
+    const nearest = getNearestSchedule(timerSchedules);
+    if (!nearest) {
+      lockSchedulePreview.style.display = 'none';
+      return;
+    }
+    lockSchedulePreview.textContent = `Sắp tới: ${nearest.timeHHMM} - ${nearest.title}`;
+    lockSchedulePreview.style.display = 'block';
+  };
   const renderLockScheduleList = () => {
     lockScheduleItems.replaceChildren();
     if (timerSchedules.length > 0) {
@@ -939,6 +994,7 @@ async function main(): Promise<void> {
   const closeLockScheduleDropdown = () => {
     lockScheduleDropdownOpen = false;
     lockScheduleDropdown.style.display = 'none';
+    renderNearestSchedulePreview();
   };
   const askScheduleInput = (seed?: {
     title: string;
@@ -1067,6 +1123,7 @@ async function main(): Promise<void> {
     }
     if (visible) {
       closeLockScheduleDropdown();
+      lockSchedulePreview.style.display = 'none';
       panel.style.display = 'none';
       lockScreen.style.display = 'none';
       document.documentElement.style.overflow = 'hidden';
@@ -1083,6 +1140,11 @@ async function main(): Promise<void> {
     panel.classList.toggle('site-locked', locked);
     panel.style.display = locked ? 'none' : '';
     lockScreen.style.display = locked ? 'flex' : 'none';
+    if (!locked) {
+      lockSchedulePreview.style.display = 'none';
+    } else {
+      renderNearestSchedulePreview();
+    }
     document.documentElement.style.overflow = locked ? 'hidden' : htmlOverflow;
     if (document.body) {
       document.body.style.overflow = locked ? 'hidden' : bodyOverflow;
@@ -1108,6 +1170,7 @@ async function main(): Promise<void> {
   const updateTimerButtonUi = (schedules: TimerSchedule[]) => {
     timerSchedules = schedules;
     renderLockScheduleList();
+    renderNearestSchedulePreview();
     if (schedules.length > 0) {
       const first = schedules[0];
       timerToggle.setAttribute(
@@ -1152,6 +1215,7 @@ async function main(): Promise<void> {
     renderLockScheduleList();
     lockScheduleDropdownOpen = true;
     lockScheduleDropdown.style.display = 'block';
+    lockSchedulePreview.style.display = 'none';
   });
   onLockScreenPointerDown = (e: PointerEvent) => {
     if (!lockScheduleDropdownOpen) return;
