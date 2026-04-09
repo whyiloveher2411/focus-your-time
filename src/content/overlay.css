@@ -19,6 +19,7 @@
 /* Nút vị trí: chỉ hiện khi hover panel (chuột); menu mở / focus bàn phím vẫn thấy */
 @media (hover: hover) and (pointer: fine) {
   .lock-toggle,
+  .timer-toggle,
   .pos-toggle {
     opacity: 0;
     pointer-events: none;
@@ -26,7 +27,9 @@
   }
 
   .panel:hover .lock-toggle,
+  .panel:hover .timer-toggle,
   .panel:hover .pos-toggle,
+  .toolbar:has(.timer-toggle:focus-visible) .timer-toggle,
   .toolbar:has(.lock-toggle:focus-visible) .lock-toggle,
   .toolbar:has(.pos-menu.open) .pos-toggle,
   .pos-toggle:focus-visible {
@@ -37,6 +40,7 @@
 
 @media (hover: none), (pointer: coarse) {
   .lock-toggle,
+  .timer-toggle,
   .pos-toggle {
     opacity: 1;
     pointer-events: auto;
@@ -54,6 +58,7 @@
 }
 
 .lock-toggle,
+.timer-toggle,
 .pos-toggle {
   flex-shrink: 0;
   box-sizing: border-box;
@@ -76,18 +81,30 @@
   color: #fecaca;
 }
 
+.timer-toggle {
+  border-color: rgba(56, 189, 248, 0.95);
+  color: #bae6fd;
+}
+
+.timer-toggle.has-schedule {
+  border-color: rgba(74, 222, 128, 0.95);
+  color: #bbf7d0;
+}
+
 .lock-toggle.locked {
   border-color: rgba(74, 222, 128, 0.95);
   color: #86efac;
 }
 
 .lock-toggle svg,
+.timer-toggle svg,
 .pos-toggle svg {
   display: block;
   flex-shrink: 0;
 }
 
 .lock-toggle:hover,
+.timer-toggle:hover,
 .pos-toggle:hover {
   filter: brightness(1.08);
 }
