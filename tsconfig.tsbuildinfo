@@ -1,0 +1,1 @@
+{"root":["./src/background/service-worker.ts","./src/content/overlay.ts","./src/shared/domain-from-url.ts","./src/shared/format-duration.ts","./src/shared/logical-day.ts","./src/shared/storage.ts","./vite.config.ts"],"errors":true,"version":"5.6.3"}
